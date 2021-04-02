@@ -11,6 +11,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 
     //DATABSE--------------------------------------------------------------------------------------------
+    {
 
     IESDataBase = QSqlDatabase::addDatabase("QSQLITE");
     IESDataBase.setDatabaseName("C:/Users/PC/Documents/H.S/ProjetIES/IESDataBase.db");
@@ -36,16 +37,53 @@ MainWindow::MainWindow(QWidget *parent)
     ui->trainingTableView->setModel(modelTraining);
 
 
+
+
     //DATABSE--------------------------------------------------------------------------------------------
+    }
 
     //SERIALPORT-----------------------------------------------------------------------------------------
+    {
+
+    listeDesPorts = QSerialPortInfo::availablePorts();
+    for(int i = 0; i<listeDesPorts.length(); i++){
+        ui->comboBoxPort->addItem(listeDesPorts[i].portName());
+    }
+    peripherique = new QSerialPort(this);
+
+    connect(peripherique, SIGNAL(readyRead()), this, SLOT(lirePeripherique()));
 
     //SERIALPORT-----------------------------------------------------------------------------------------
+    }
+
+    //IMAGES---------------------------------------------------------------------------------------------
+
+    QPixmap greenCircle("C:/Users/PC/Documents/H.S/ProjetIES/Ressource/voyant_vert.png");
+
+        QPixmap redCircle("C:/Users/PC/Documents/H.S/ProjetIES/Ressource/voyant_rouge.png");
+
+        ui->greenCLabel->setPixmap(greenCircle.scaled(120,120, Qt::KeepAspectRatioByExpanding));
+
+        ui->redCLabel->setPixmap(redCircle.scaled(120,120, Qt::KeepAspectRatioByExpanding));
+
+        ui->redCLabel->hide();
+
+
+    //IMAGES---------------------------------------------------------------------------------------------
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::lirePeripherique()
+{
+
+    serialData = peripherique->readLine();
+    serialBuffer += QString::fromStdString(serialData.toStdString());
+    ui->label_readPeripherique->setText(serialBuffer);
+
 }
 
 
@@ -180,4 +218,80 @@ void MainWindow::replacment(QString &rfid)
     rfid.replace("\r", NULL);
     rfid.replace("\n", NULL);
 
+}
+
+void MainWindow::delay(int s)
+{
+
+    QTime dieTime= QTime::currentTime().addSecs(s);
+            while (QTime::currentTime() < dieTime)
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+
+}
+
+void MainWindow::on_playerTableView_doubleClicked(const QModelIndex &index)
+{
+
+
+    qDebug() << "index: " << index.data(2).toString() ;
+
+    qDebug() << "ligne: " << index.row();
+
+}
+
+void MainWindow::on_activePortButton_clicked()
+{
+
+
+    if(peripherique->isOpen()){
+
+        peripherique->close();
+    }
+
+    peripherique->setPortName(portSelectionne);
+    peripherique->setBaudRate(QSerialPort::Baud9600);
+    peripherique->setDataBits(QSerialPort::Data8);
+    peripherique->setParity(QSerialPort::NoParity);
+    peripherique->setFlowControl(QSerialPort::NoFlowControl);
+    peripherique->setStopBits(QSerialPort::OneStop);
+
+    connecte = peripherique->open(QIODevice::ReadWrite);
+
+    if((connecte && out.contains("USB"))){
+
+        QMessageBox::warning(this,"Information", "Laser pret !");
+
+    }else{
+
+        QMessageBox::warning(this,"Information", "Erreur Port Serie... !");
+
+    }
+
+    peripherique->clear();
+}
+
+void MainWindow::on_comboBoxPort_currentIndexChanged(const QString &arg1)
+{
+    int sel=ui->comboBoxPort->currentData().toInt();
+        out="Siretta Modem Connection Info: \n";
+        out+=listeDesPorts[sel].portName()+" "+listeDesPorts[sel].description()+"\n";
+        out+=listeDesPorts[sel].systemLocation()+"\n";
+        if (listeDesPorts[sel].hasVendorIdentifier()&& listeDesPorts[sel].hasProductIdentifier())
+           out+=listeDesPorts[sel].manufacturer()+" ("+ QString::number(listeDesPorts[sel].vendorIdentifier(),16) + ":" + QString::number(listeDesPorts[sel].productIdentifier(),16) + ")";
+
+        ui->label_readPeripherique->setText(out);
+
+        portSelectionne = listeDesPorts[sel].portName();
+        ui->label_Port->setText("Port : " + portSelectionne);
+
+}
+
+void MainWindow::on_laserON_clicked()
+{
+    peripherique->write("1");
+}
+
+void MainWindow::on_laserOFF_clicked()
+{
+    peripherique->write("0");
 }

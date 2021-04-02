@@ -31,6 +31,9 @@ public:
     ~MainWindow();
 
 private slots:
+
+    void lirePeripherique();
+
     void on_rfidEdit_returnPressed();
 
     void on_delEdit_returnPressed();
@@ -39,10 +42,32 @@ private slots:
 
     void replacment(QString &rfid);
 
+    void delay(int s);
+
+    void on_playerTableView_doubleClicked(const QModelIndex &index);
+
+    void on_activePortButton_clicked();
+
+    void on_comboBoxPort_currentIndexChanged(const QString &arg1);
+
+    void on_laserON_clicked();
+
+    void on_laserOFF_clicked();
+
 private:
     Ui::MainWindow *ui;
+
     QSqlDatabase IESDataBase;
     QSqlQueryModel *modelPlayer;
     QSqlQueryModel *modelTraining;
+
+    QString portSelectionne;
+    QList<QSerialPortInfo> listeDesPorts;
+    QSerialPort *peripherique;
+    bool connecte = false;
+    QByteArray serialData;
+    QString serialBuffer;
+    QString out;
+
 };
 #endif // MAINWINDOW_H
