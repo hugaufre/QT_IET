@@ -17,14 +17,14 @@
    <widget class="QTabWidget" name="onglet">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>10</y>
+      <x>0</x>
+      <y>20</y>
       <width>1241</width>
       <height>1081</height>
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -53,8 +53,8 @@
      <widget class="QPushButton" name="trainingButton">
       <property name="geometry">
        <rect>
-        <x>1010</x>
-        <y>100</y>
+        <x>970</x>
+        <y>230</y>
         <width>151</width>
         <height>23</height>
        </rect>
@@ -62,6 +62,32 @@
       <property name="text">
        <string>Lancer la séance</string>
       </property>
+     </widget>
+     <widget class="QWidget" name="gridLayoutWidget_2">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>400</y>
+        <width>351</width>
+        <height>169</height>
+       </rect>
+      </property>
+      <layout class="QGridLayout" name="signalGrid">
+       <item row="0" column="0">
+        <widget class="QLabel" name="greenCLabel">
+         <property name="text">
+          <string>green</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLabel" name="redCLabel">
+         <property name="text">
+          <string>red</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </widget>
     <widget class="QWidget" name="tab_2">
@@ -209,7 +235,7 @@
      <widget class="QLabel" name="label">
       <property name="geometry">
        <rect>
-        <x>770</x>
+        <x>1110</x>
         <y>360</y>
         <width>71</width>
         <height>16</height>
@@ -222,7 +248,7 @@
      <widget class="QPushButton" name="laserON">
       <property name="geometry">
        <rect>
-        <x>770</x>
+        <x>1110</x>
         <y>390</y>
         <width>75</width>
         <height>23</height>
@@ -235,7 +261,7 @@
      <widget class="QPushButton" name="laserOFF">
       <property name="geometry">
        <rect>
-        <x>770</x>
+        <x>1110</x>
         <y>440</y>
         <width>75</width>
         <height>23</height>
@@ -243,6 +269,65 @@
       </property>
       <property name="text">
        <string>LaserOFF</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="lineEdit">
+      <property name="geometry">
+       <rect>
+        <x>450</x>
+        <y>310</y>
+        <width>151</width>
+        <height>20</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QComboBox" name="comboBoxPort">
+      <property name="geometry">
+       <rect>
+        <x>1030</x>
+        <y>260</y>
+        <width>151</width>
+        <height>22</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="activePortButton">
+      <property name="geometry">
+       <rect>
+        <x>1030</x>
+        <y>300</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Activer Port</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_readPeripherique">
+      <property name="geometry">
+       <rect>
+        <x>760</x>
+        <y>260</y>
+        <width>201</width>
+        <height>351</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>TextLabel</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_Port">
+      <property name="geometry">
+       <rect>
+        <x>1030</x>
+        <y>230</y>
+        <width>151</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>TextLabel</string>
       </property>
      </widget>
     </widget>
