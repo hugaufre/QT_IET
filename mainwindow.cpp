@@ -9,12 +9,14 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->statusbar->addPermanentWidget(ui->connectionLabel);
 
+    ui->infoLabel->hide();
+    ui->trainingEndB->hide();
 
     //DATABSE--------------------------------------------------------------------------------------------
     {
 
     IESDataBase = QSqlDatabase::addDatabase("QSQLITE");
-    IESDataBase.setDatabaseName("C:/Users/PC/Documents/H.S/ProjetIES/IESDataBase.db");
+    IESDataBase.setDatabaseName("C:/Users/hugos/OneDrive/Documents/Cours/Projet/IESDataBase.db");
 
     if(IESDataBase.open()){
 
@@ -26,14 +28,17 @@ MainWindow::MainWindow(QWidget *parent)
 
     IESDataBase.open();
     this->modelPlayer = new QSqlQueryModel();
-    modelPlayer->setQuery("SELECT lname,fname,license,tag_rfid, datation_instant_shoot FROM Players");
-    //modelPlayer->setQuery("SELECT * FROM Players");
-    ui->playerTableView->setModel(modelPlayer);
-    ui->showPlayerTable->setModel(modelPlayer);
-
-    IESDataBase.open();
+    this->modelPlayerInfo = new QSqlQueryModel();
+    this->modelPlayerInfo2 = new QSqlQueryModel();
     this->modelTraining = new QSqlQueryModel();
+
+    modelPlayer->setQuery("SELECT Noms,Prenoms,N°deTag FROM Joueurs");
+    modelPlayerInfo2->setQuery("SELECT Prenoms,Noms,N°deTag FROM Joueurs");
     modelTraining->setQuery("SELECT * FROM Seance");
+
+
+    ui->playerTableView->setModel(modelPlayer);
+    ui->showPlayerTable->setModel(modelPlayerInfo2);
     ui->trainingTableView->setModel(modelTraining);
 
 
@@ -57,10 +62,11 @@ MainWindow::MainWindow(QWidget *parent)
     }
 
     //IMAGES---------------------------------------------------------------------------------------------
+    {
 
-    QPixmap greenCircle("C:/Users/PC/Documents/H.S/ProjetIES/Ressource/voyant_vert.png");
+    QPixmap greenCircle("C:/Users/hugos/OneDrive/Documents/Cours/Projet/voyant_vert.png");
 
-        QPixmap redCircle("C:/Users/PC/Documents/H.S/ProjetIES/Ressource/voyant_rouge.png");
+        QPixmap redCircle("C:/Users/hugos/OneDrive/Documents/Cours/Projet/voyant_rouge.png");
 
         ui->greenCLabel->setPixmap(greenCircle.scaled(120,120, Qt::KeepAspectRatioByExpanding));
 
@@ -70,6 +76,8 @@ MainWindow::MainWindow(QWidget *parent)
 
 
     //IMAGES---------------------------------------------------------------------------------------------
+    }
+
 }
 
 MainWindow::~MainWindow()
@@ -84,8 +92,9 @@ void MainWindow::lirePeripherique()
     serialBuffer += QString::fromStdString(serialData.toStdString());
     ui->label_readPeripherique->setText(serialBuffer);
 
-}
 
+
+}
 
 void MainWindow::on_rfidEdit_returnPressed()
 {
@@ -100,8 +109,8 @@ void MainWindow::on_rfidEdit_returnPressed()
 
     if(rfidEDIT.length() == 10){
 
-        query.exec("SELECT lname,fname,license,tag_rfid, datation_instant_shoot FROM Players WHERE tag_rfid =  \""+ rfidEDIT + "\"");
-        modelPlayer->setQuery("SELECT lname,fname,license,tag_rfid, datation_instant_shoot FROM Players WHERE tag_rfid =  \""+ rfidEDIT + "\"");
+        query.exec("SELECT Prenoms,Noms,N°deTag, datation_instant_shoot FROM Joueurs WHERE N°deTag =  \""+ rfidEDIT + "\"");
+       //modelPlayer->setQuery("SELECT Prenoms,Noms,N°deTag, datation_instant_shoot FROM Joueurs WHERE N°deTag =  \""+ rfidEDIT + "\"");
 
 
         while(query.next()){ //On recherche avec une boucle dans la base de données si le TAG est attribué.
@@ -117,6 +126,9 @@ void MainWindow::on_rfidEdit_returnPressed()
 
             QMessageBox::warning(this,"Information!","Aucun enregistrement n'a été fait avec ce tag, veuillez ajouter un joueur avec ce tag pour l'utiliser");
 
+        } else {
+
+            modelPlayerInfo2->setQuery("SELECT Prenoms,Noms,N°deTag, datation_instant_shoot FROM Joueurs WHERE N°deTag =  \""+ rfidEDIT + "\"");
         }
 
     }
@@ -136,16 +148,23 @@ void MainWindow::on_delEdit_returnPressed()
         if(delrfid.length() != 10){
 
         }else{
-            QMessageBox::StandardButton reponse;
-            reponse = QMessageBox::question(this,"Information","Voulez-vous supprimer le joueur en question ?", QMessageBox::Yes | QMessageBox::No);
 
-            if(reponse == QMessageBox::Yes){
+            QMessageBox reponse;
 
-                modelPlayer->setQuery("DELETE FROM Players WHERE tag_rfid = \"" +delrfid+ "\"");
+            reponse.setText(tr("Voulez-vous supprimez ce joueur ?"));
+            QAbstractButton* pButtonYes = reponse.addButton(tr("Oui"), QMessageBox::YesRole); reponse.addButton(tr("Non"), QMessageBox::NoRole);
+
+             reponse.exec();
+
+            if (reponse.clickedButton()==pButtonYes) {
+
+                modelPlayer->setQuery("DELETE FROM Joueurs WHERE N°deTag = \"" +delrfid+ "\"");
 
                 ui->delEdit->clear();
 
-                modelPlayer->setQuery("SELECT lname,fname,tag_rfid FROM Players");
+                modelPlayerInfo2->setQuery("SELECT Prenoms,Noms,N°deTag FROM Joueurs");
+                modelPlayerInfo->setQuery("SELECT Noms,N°deTag FROM Joueurs");
+                modelPlayer->setQuery("SELECT Prenoms,Noms,N°deTag FROM Joueurs");
 
             }else{
 
@@ -167,11 +186,11 @@ void MainWindow::on_addPlayerB_clicked()
     QString fname = ui->fnameEdit->text();
 
 
-    if(addRFID.length() == 10){
+    if(addRFID.length() == 10){ //On vérifie si le n° de tag comporte bien 10 chiffres
 
-        query.prepare("INSERT INTO Players (lname, fname, tag_rfid)" //Commande pour ajouter un joueur...
+        query.prepare("INSERT INTO Joueurs (Prenoms, Noms, N°deTag)" //Commande pour ajouter un joueur...
               "VALUES (?, ?, ?)");
-        query.addBindValue(fname);                                        //...avec les saisies précédentes
+        query.addBindValue(fname);                                        //...avec tout les paramètres
         query.addBindValue(lname);
         query.addBindValue(addRFID);
 
@@ -180,7 +199,27 @@ void MainWindow::on_addPlayerB_clicked()
         if(query.exec()){ //On vérifie si le joueur a été enregistré
 
             QMessageBox::information(this,"Information","Enregistrment effectué");
-            modelPlayer->setQuery("SELECT lname,fname,tag_rfid FROM Players"); //On affiche le joueur.
+            modelPlayerInfo2->setQuery("SELECT Prenoms, Noms, N°deTag FROM Joueurs");
+            modelPlayerInfo->setQuery("SELECT Noms,N°deTag FROM Joueurs");
+            modelPlayer->setQuery("SELECT Prenoms, Noms, N°deTag FROM Joueurs");//On affiche le joueur.
+
+
+
+           /* query.prepare("INSERT INTO Seance (joueur,date,tag_id)"
+                  "VALUES (?,?,?)");
+            query.addBindValue(fname + " " + lname);
+            query.addBindValue(0);
+            query.addBindValue(addRFID);
+
+            if(query.exec()){
+
+                qDebug() << "Ajouté pour la séance !";
+
+            }else{
+
+                QMessageBox::information(this,"","Erreur..." + query.lastError().text());
+            } */
+
 
 
         }else{ //Dans le cas ou il y a une erreur
@@ -189,7 +228,7 @@ void MainWindow::on_addPlayerB_clicked()
         }
 
 
-    }else{
+    }else{ //Dans le cas ou le tag n'a pas 10 chiffres
 
 
            QMessageBox::warning(this,"Information","Le n° du tag doit comporter 10 chiffres !");
@@ -233,9 +272,47 @@ void MainWindow::on_playerTableView_doubleClicked(const QModelIndex &index)
 {
 
 
-    qDebug() << "index: " << index.data(2).toString() ;
+    QString name = index.data(0).toString();
 
-    qDebug() << "ligne: " << index.row();
+    QSqlQuery q;
+
+    q.prepare("SELECT N°deTag FROM Joueurs WHERE Prenoms = \"" + name + "\"");
+
+    q.exec();
+
+    q.next();
+
+       qDebug() << "Resultat: " << q.value(0).toString();
+
+
+    //query.exec("SELECT Noms FROM Players WHERE Prenoms = \""+ index.data(0).toString() +"\"");
+
+
+    QMessageBox reponse;                                                            //apparition de la fenêtre
+    reponse.setText("Le joueur choisi est :  " + index.data(0).toString());
+    reponse.setInformativeText("Voulez-vous lancez la séance ?");                   //Avertir de l'utilisateur si il veut lancer une séance
+
+
+    //Deux options : soit un bouton "oui" ou soit un bouton "non"
+    QAbstractButton* pButtonYes = reponse.addButton(tr("Oui"), QMessageBox::YesRole); reponse.addButton(tr("Non"), QMessageBox::NoRole);
+
+    reponse.exec();
+
+    if (reponse.clickedButton()==pButtonYes) { //Si l'utilisateur clique sur "Oui"
+
+        qDebug() << "Yes";
+
+        trainingFunction(); //Ce code execute la fonction de la séance
+
+    }
+
+        else{ //Si l'utilisateur clique sur "Non"
+
+        qDebug() << "No";
+
+        ui->seanceRFID->clear();
+
+       }
 
 }
 
@@ -294,4 +371,220 @@ void MainWindow::on_laserON_clicked()
 void MainWindow::on_laserOFF_clicked()
 {
     peripherique->write("0");
+}
+
+void MainWindow::trainingFunction() //Fonction de la séance
+{
+    QSqlQuery q;
+    modelTraining->setQuery("SELECT * FROM Seance");          //Affichage des données du joueur (table séance)
+    QMessageBox::warning(this,"Attention!", "Laser activé");  //Message pour prévenir que le laser s'est activé
+    peripherique->write("1");                                 //Activation du laser
+    ui->seanceRFID->clear();                                  //Ce supprime le Tag scanné de l'edit de texte
+    ui->trainingEndB->show();                                 //Le bouton "Terminer la séance" apparait
+    serialBuffer.clear();                                     //expliqué dans "Fonctionnement de la barrière immatérielle"
+
+    q.prepare("SELECT joueur FROM Seance");
+    q.exec();
+    q.next();
+
+    QString nomDuJoueur = q.value(0).toString();
+    e = 0;
+    int tirs = 1;
+
+    while(e == 0){ // Une fois la séance en marche, on utilise une boucle avec une condition e
+
+    if(serialBuffer.contains("G")) { //Dans le cas où la carte écrit "G" (si la barrière est coupé)
+
+                qDebug() << "GOAL!";
+
+                q.prepare("UPDATE Seance SET date = :date, nombredetirs = :tir WHERE Joueur = :nomjoueur");
+
+                q.bindValue(":date",0);                     //On ajoute toute les informations
+                q.bindValue(":tir", tirs);                  //
+                q.bindValue(":nomjoueur",nomDuJoueur);      //
+                tirs = tirs+1;                              // +1 tir
+
+                ui->greenCLabel->hide();
+                ui->redCLabel->show();
+                ui->infoLabel->show();
+                delay(5);
+
+                if (!q.exec()){
+
+                    qDebug() << "Error" + q.lastError().text();
+                }
+
+                modelTraining->setQuery("SELECT * FROM Seance");
+                ui->infoLabel->hide();
+                ui->greenCLabel->show();
+                ui->redCLabel->hide();
+                peripherique->write("1");
+                serialBuffer.clear();
+
+    } else if (serialBuffer.contains("O")){
+
+                qDebug() << "TIME OUT!";
+
+                QMessageBox::warning(this,"Information", "Laser désactivé, Séance terminée");
+
+                exportSeanceDataBase();
+                modelTraining->setQuery("DELETE FROM Seance");
+                ui->labelStatut->setText("Etat de la seance : Terminée");
+                delay(5);
+                ui->labelStatut->setText("Etat de la seance : Pas de seance actuellement");
+                serialBuffer.clear();
+
+                e = 1;
+
+    }
+
+        delay(1);
+
+    }
+
+    QMessageBox::warning(this,"Information", "Laser désactivé, Séance Terminée");
+
+    exportSeanceDataBase();
+
+    modelTraining->setQuery("DELETE FROM Seance");
+
+    ui->labelStatut->setText("Etat de la seance : Terminée");
+    ui->infoLabel->show();
+    ui->infoLabel->setText("Données exporté !");
+
+    delay(5);
+
+    ui->labelStatut->setText("Etat de la seance : Pas de seance actuellement");
+    ui->greenCLabel->show();
+    ui->redCLabel->hide();
+    ui->infoLabel->hide();
+    ui->trainingEndB->hide();
+
+
+
+}
+
+void MainWindow::on_seanceRFID_returnPressed()
+{
+
+    QString rfid = ui->seanceRFID->text();
+
+    replacment(rfid);
+
+    QSqlQuery q;
+
+    q.prepare("SELECT Prenoms, Noms FROM Joueurs WHERE N°deTag = \"" + rfid + "\"");
+
+    q.exec();
+
+    if (!q.next()){
+
+
+        qDebug() << "RFID inconnu";
+
+        QMessageBox::information(this, "Erreur!", "Tag RFID Inconnu");
+        ui->seanceRFID->clear();
+
+    }else{
+
+       qDebug() << "Resultat: " << q.value(0).toString();
+
+       QString prenoms = q.value(0).toString();
+       QString noms = q.value(1).toString();
+
+
+
+
+
+    QMessageBox reponse;                                                            //apparition de la fenêtre
+    reponse.setWindowTitle("Confirmation");
+    reponse.setText("Le joueur choisi est :  " + prenoms + " "+ noms);
+    reponse.setInformativeText("Voulez-vous lancez la séance ?");                   //Avertir de l'utilisateur si il veut lancer une séance
+
+
+    //Deux options : soit un bouton "oui" ou soit un bouton "non"
+    QAbstractButton* pButtonYes = reponse.addButton(tr("Oui"), QMessageBox::YesRole); reponse.addButton(tr("Non"), QMessageBox::NoRole);
+
+    reponse.exec();
+
+    if (reponse.clickedButton()==pButtonYes) { //Si l'utilisateur clique sur "Oui"
+
+        qDebug() << "Yes";
+
+        on_activePortButton_clicked();
+
+        q.prepare("INSERT INTO Seance (joueur,date,tag_id,nombredetirs)" //Commande pour ajouter un joueur...
+              "VALUES (?,?,?,?)");
+        q.addBindValue(prenoms + " " + noms);                                        //...avec tout les paramètres
+        q.addBindValue(0);
+        q.addBindValue(rfid);
+        q.addBindValue(0);
+
+        if(q.exec()){
+
+            qDebug() << "Ajouté pour la séance !";
+
+        }else{
+
+            QMessageBox::information(this,"","Erreur..." + q.lastError().text());
+        }
+        ui->seanceRFID->setReadOnly(true);
+        ui->seanceRFID->setPlaceholderText("Seance en cours...");
+
+        trainingFunction(); //Ce code execute la fonction de la séance
+
+        ui->seanceRFID->setReadOnly(false);
+        ui->seanceRFID->setPlaceholderText("Scanner un Tag RFID");
+
+    }
+
+        else{ //Si l'utilisateur clique sur "Non"
+
+        qDebug() << "No";
+
+        ui->seanceRFID->clear();
+
+    }
+
+    }
+}
+
+void MainWindow::exportSeanceDataBase()
+{
+    QSqlQuery q;
+    modelTraining->setQuery("SELECT * FROM Seance");
+
+
+    q.prepare("SELECT * FROM Seance");
+    q.exec();
+    q.next();
+
+    QFile file("c:/Users/hugos/OneDrive/Documents/Cours/Projet/InfoSeanceListe/InfoJoueur" + q.value(0).toString() + ".csv");
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)){
+            qDebug() << "Failed!";
+            return;
+        }
+
+        QTextStream out(&file);
+        //file.seek(80);
+
+
+        QString tableSeance =
+                  q.value(0).toString() + ","
+                + q.value(1).toString() + ","
+                + q.value(2).toString() + ","
+                + q.value(3).toString();
+
+        qDebug() << "stream: " << tableSeance;
+        out << tableSeance;
+
+
+}
+
+void MainWindow::on_trainingEndB_clicked()
+{
+    e = 1;
+
+    qDebug() << "Finish !";
+
 }

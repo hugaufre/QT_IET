@@ -17,6 +17,8 @@
 #include <QMessageBox>
 #include <QSqlError>
 #include <QtDebug>
+#include <QAbstractButton>
+#include <QFile>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -54,11 +56,21 @@ private slots:
 
     void on_laserOFF_clicked();
 
+    void trainingFunction();
+
+    void on_seanceRFID_returnPressed();
+
+    void exportSeanceDataBase();
+
+    void on_trainingEndB_clicked();
+
 private:
     Ui::MainWindow *ui;
 
     QSqlDatabase IESDataBase;
     QSqlQueryModel *modelPlayer;
+    QSqlQueryModel *modelPlayerInfo;
+    QSqlQueryModel *modelPlayerInfo2;
     QSqlQueryModel *modelTraining;
 
     QString portSelectionne;
@@ -68,6 +80,7 @@ private:
     QByteArray serialData;
     QString serialBuffer;
     QString out;
+    int e = 0;
 
 };
 #endif // MAINWINDOW_H
